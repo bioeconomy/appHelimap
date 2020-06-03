@@ -165,7 +165,9 @@ var groupedOverlays = {
                       };
 
 var layerControl=L.control.layers(baseLayers, groupedOverlays, {position: 'topleft'}).addTo(map);
-
+map.on('click', function(e) {
+  alert("Lat & Lon : " + e.latlng.lat + ", " + e.latlng.lng)
+});
 
 
 $(document).ready(function() {
@@ -217,7 +219,11 @@ function addPoints(data) {
         talea:data[row].C_Talea,
         sem:data[row].C_SEM,
         audio:data[row].Audionote
+<<<<<<< HEAD
+       
+=======
 
+>>>>>>> 2cc87aecf479e7f1ffa60d65eb0894d0fb13db7f
       }
 };
  markers.addLayer(marker);
@@ -258,10 +264,8 @@ function addPoints(data) {
           "<strong>Foto particolare foglia</strong>:"+"<br>"+
           "<img src=\'"+e.target.feature.properties.foto_PFog+"' alt=\"Non disponibile\">"+ "<br>";
  sidebar.open(panelID);
-map.on('click', function(e) {
-  alert("Lat & Lon : " + e.latlng.lat + ", " + e.latlng.lng)
-});
-      }
+
+   }
     });
     
     // AwesomeMarkers is used to create fancier icons
