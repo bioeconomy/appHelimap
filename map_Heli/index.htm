@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflet web map with Google Sheets</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="css/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="css/leaflet-sidebar.css"/>
+    <link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+    <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.min.css"/>
+    <link rel="stylesheet" href="css/MarkerCluster.css">
+    <link rel="stylesheet" href="css/MarkerCluster.Default.css">
+   
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        img {width:auto ; height: 320px; }
+
+
+        #sidebar-content, #sidebar-title {
+            word-break: break-word;
+            margin-right: 50px;
+        }
+       .testpanel { 
+            font-style: italic;
+            text-align: justify;
+            color: #AAA;
+        }
+     </style>
+    <script type="text/javascript" src="js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.csv.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" ></script>
+    <script type="text/javascript" src="js/leaflet-sidebar.js"></script>
+    <script type="text/javascript" src="js/L.Control.Locate.js" ></script>   
+    <script type="text/javascript" src="js/leaflet.markercluster-src.js"></script>
+    <script type="text/javascript" src="js/leaflet.awesome-markers.min.js"></script>
+</head>
+<body>
+<div id="map"></div>
+
+
+<script>
+var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+	maxZoom: 17,
+	attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+});
+
+
+var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+});
+
+
+var OpenStreetMap_Mapnik = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'});
+
+
+var Positron= L.tileLayer(
+  "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}{r}.png",
+  {
+    attribution:
+      "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> &copy; <a href='http://cartodb.com/attributions'>CartoDB</a>",
+    subdomains: "abcd",
+    maxZoom: 19
+  });
+
+var HikingTrails = L.tileLayer('https://tile.waymarkedtrails.org/{id}/{z}/{x}/{y}.png', {
+		id: 'hiking',
+		pointable: true,
+		attribution: '&copy; <a href="http://waymarkedtrails.org">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+	});
+	var CyclingTrails = L.tileLayer('https://tile.waymarkedtrails.org/{id}/{z}/{x}/{y}.png', {
+		id: 'cycling',
+		pointable: true,
+		attribution: '&copy; <a href="http://waymarkedtrails.org">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+	});
+
+ 
+var baseLayers = {"OpenStreetMap": OpenStreetMap_Mapnik,
+		  "OpenTopoMap":   OpenTopoMap,
+                  "EsriWorld": Esri_WorldImagery
+                  };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var map= L.map('map', {
+		center:  [42.775243380699706, 10.304145812988283],
+		zoom: 12
+	});
+
+
+Esri_WorldImagery.addTo(map); // default basemap
+
+L.control.locate({strings: { title: "Si sono qui!" }}).addTo(map);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+var sidebar = L.control
+  .sidebar({
+    container: "sidebar",
+    closeButton: true,
+    position: "right"
+  })
+  .addTo(map);
+
+let panelID = "my-info-panel"; // dichiara una variabile globale
+
+var panelContent = {
+  id: panelID,
+  tab: "<i class='fa fa-bars active'></i>",
+  pane: "<p id='sidebar-content'></p>",
+  title: "<h2 id='sidebar-title'>Nessuna osservazione selezionata!</h2>"
+};
+
+sidebar.addPanel(panelContent)
+            // add a tttab with a click callback, initially disabled
+            .addPanel({
+                id:   'mail',
+                tab:  '<i class="fa fa-envelope"></i>',
+                title: 'Contatti',
+                pane: "<p id='sidebar-mail-content'> </p>",
+                button: function() { alert('Mail') },
+                disabled: true,
+            })
+        .addPanel({
+                id: 'click',
+                tab: '<i class="fa fa-info"></i>',
+                title: 'Info',
+                pane: "<p id='sidebar-info-mail-content'> </p>",
+                button: function () { alert('Informazioni') }
+                });
+
+
+map.on("click", function() {
+  sidebar.close(panelID);
+});
+
+</script>
+
+
+
+<script>
+var markers = L.markerClusterGroup().addTo(map);
+var pointGroupLayer;
+var notes = ["index","Longitude","Latitudine"];
+
+var groupedOverlays = {
+
+                  "Sentieri": HikingTrails, 
+                  "Piste ciclabili": CyclingTrails
+                      };
+
+var layerControl=L.control.layers(baseLayers, groupedOverlays, {position: 'topleft'}).addTo(map);
+
+
+
+$(document).ready(function() {
+  $.ajax({
+    type: "GET",
+    url: 'http://149.139.8.55/data/kobodist/kobo_appHeli_csv.php',
+    dataType: "text",
+    success: function(dataf){ addPoints(dataf);}
+  });
+});
+
+function addPoints(data) {
+  if (pointGroupLayer != null) {
+    pointGroupLayer.remove();
+  }
+  pointGroupLayer = L.layerGroup();
+  layerControl.addOverlay(pointGroupLayer, "Segnalazioni");
+   data = $.csv.toObjects(data);
+   console.log(data);
+   for (var row = 0; row < data.length; row++) {
+    var marker = L.marker([data[row].Latitude, data[row].Longitude]).addTo(pointGroupLayer);
+        marker.feature = {
+        properties: {
+        data_invio:data[row].Data_invio,
+        aut:data[row].Rilevatore,
+        codice_rilievo:data[row].Codice_rilievo,
+        genere:data[row].Genere,
+        specie:data[row].nome_specie,
+        sottospecie:data[row].Sottospecie,
+        sic:data[row].Sicurezza_determinazione,
+        esp:data[row].Esposizione_sito,
+        note:data[row].Note,
+        geo:data[row].Sito_obs,
+        id:data[row].index,
+        foto_PI:data[row].Foto_pianta_intera,
+        foto_RS:data[row].Foto_ramo_sterile,
+        foto_RF:data[row].Foto_ramo_fiorale,
+        foto_PPF:data[row].Foto_particolare_fiore,
+        foto_PFog:data[row].Foto_particolare_foglia,
+        int_P:data[row].Intensita_profumo,
+        tipo_P:data[row].Tipologia_profumo,
+        pheno:data[row].Fase_fenologica_fioritura,
+        hveg:data[row].Habitus_ramo_vegetativo,
+        hramfio:data[row].Habitus_ramo_fiorale,
+        dna:data[row].C_DNA,
+        suolo:data[row].C_Suolo,
+        botanico:data[row].C_Botanico,
+        fiori:data[row].C_Fiori,
+        talea:data[row].C_Talea,
+        sem:data[row].C_SEM,
+        audio:data[row].Audionote;
+
+      }
+};
+ markers.addLayer(marker);
+     marker.on({
+      click: function(e) {
+        L.DomEvent.stopPropagation(e);
+        document.getElementById("sidebar-title").innerHTML =e.target.feature.properties.specie;
+        document.getElementById("sidebar-content").innerHTML =
+          "<strong>Data</strong>:"+e.target.feature.properties.data_invio + "<br>" +
+          "<strong>Osservatore</strong>:"+e.target.feature.properties.aut + "<br>" +
+          "<strong>Codice rilievo</strong>:"+e.target.feature.properties.codice_rilievo+ "<br>" +
+          "<strong>Genere</strong>:"+e.target.feature.properties.genere+ "<br>" + 
+          "<strong>Specie</strong>:"+e.target.feature.properties.specie + "<br>" + 
+          "<strong>SottoSpecie</strong>:"+e.target.feature.properties.sottospecie + "<br>" + 
+          "<strong>Sicurezza determinazione</strong>:"+e.target.feature.properties.sic + "<br>" +
+          "<strong>Esposizione sito</strong>:"+e.target.feature.properties.esp + "<br>" +
+          "<strong>GEO</strong>:"+e.target.feature.properties.geo + "<br>" +
+          "<strong>ID</strong>:"+e.target.feature.properties.id + "<br>" + 
+          "<strong>Fase fenologica fioritura</strong>:"+e.target.feature.properties.pheno+ "<br>"+
+          "<strong>Habitus ramo vegetativo</strong>:"+e.target.feature.properties.hveg+ "<br>"+
+          "<strong>Habitus ramo fiorale</strong>:"+e.target.feature.properties.hramfio+ "<br>"+
+          "<strong>Tipologia profumo</strong>:"+e.target.feature.properties.tipo_P+ "<br>"+
+          "<strong>Intesità profumo</strong>:"+e.target.feature.properties.int_P+ "<br>"+
+          "<strong>Campione DNA</strong>:"+e.target.feature.properties.dna+ "<br>"+
+          "<strong>Campione Suolo</strong>:"+e.target.feature.properties.suolo+ "<br>"+
+          "<strong>Campione Botanico</strong>:"+e.target.feature.properties.botanico+ "<br>"+
+          "<strong>Campione Fiori</strong>:"+e.target.feature.properties.fiori+ "<br>"+
+          "<strong>Campione Talea</strong>:"+e.target.feature.properties.talea+ "<br>"+
+          "<strong>Campione SEM</strong>:"+e.target.feature.properties.sem+ "<br>"+
+          "<strong>Foto pianta intera:</strong>:"+"<br>"+
+          "<img src=\'"+e.target.feature.properties.foto_PI+"' alt=\"Non disponibile\">"+ "<br>"+
+          "<strong>Foto ramo sterile</strong>:"+"<br>"+
+          "<img src=\'"+e.target.feature.properties.foto_RS+"' alt=\"Non disponibile\">"+ "<br>"
+          "<strong>Foto ramo fiorale</strong>:"+"<br>"+
+          "<img src=\'"+e.target.feature.properties.foto_RF+"' alt=\"Non disponibile\">"+ "<br>"+
+          "<strong>Foto particolare fiore</strong>:"+"<br>"+
+          "<img src=\'"+e.target.feature.properties.foto_PPF+"' alt=\"Non disponibile\">"+ "<br>"
+          "<strong>Foto particolare foglia</strong>:"+"<br>"+
+          "<img src=\'"+e.target.feature.properties.foto_PFog+"' alt=\"Non disponibile\">"+ "<br>";
+ sidebar.open(panelID);
+map.on('click', function(e) {
+  alert("Lat & Lon : " + e.latlng.lat + ", " + e.latlng.lng)
+});
+      }
+    });
+    
+    // AwesomeMarkers is used to create fancier icons
+   function determineColor(data) {
+  if ( data === "Piante") {
+    return 'green';
+  } else if ( data === "Animali" ) {
+    return 'red';
+  } else if ( data === "Funghi" ) {
+    return 'brown';
+  } else if ( data === "Ambienti" ) {
+    return 'violet';
+  }
+  else {
+    return 'blue';
+  }
+};
+  var icon = L.AwesomeMarkers.icon({
+       icon: "info-sign",
+       markerColor: "yellow",
+       prefix: "glyphicon",
+       extraClasses: "fa-rotate-0"
+    });
+    marker.setIcon(icon);
+   
+  }
+};
+
+
+
+ 
+// https://digital-geography.com/csv-heatmap-leaflet/
+</script>
+
+</body>
+</html>
