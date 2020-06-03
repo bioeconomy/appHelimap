@@ -1,2 +1,7 @@
 # appHelimap
-mappa rilevamenti in campo Lorenzo Marini
+
+Mappa rilevamenti in campo 
+
+Lorenzo Marini UNIFI
+
+
