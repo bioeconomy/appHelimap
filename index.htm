@@ -96,7 +96,7 @@ var baseLayers = {"OpenStreetMap": OpenStreetMap_Mapnik,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var map= L.map('map', {
-		center:  [42.775243380699706, 10.304145812988283],
+		center:  [42.34710196, 10.92026174 ],
 		zoom: 12
 	});
 
@@ -165,6 +165,7 @@ var groupedOverlays = {
                       };
 
 var layerControl=L.control.layers(baseLayers, groupedOverlays, {position: 'topleft'}).addTo(map);
+
 map.on('click', function(e) {
   alert("Lat & Lon : " + e.latlng.lat + ", " + e.latlng.lng)
 });
@@ -218,14 +219,15 @@ function addPoints(data) {
         fiori:data[row].C_Fiori,
         talea:data[row].C_Talea,
         sem:data[row].C_SEM,
-        audio:data[row].Audionote;
+        audio:data[row].Audionote
+
       }
 };
  markers.addLayer(marker);
      marker.on({
       click: function(e) {
         L.DomEvent.stopPropagation(e);
-        document.getElementById("sidebar-title").innerHTML =e.target.feature.properties.specie;
+        document.getElementById("sidebar-title").innerHTML =e.target.feature.properties.codice_rilievo;
         document.getElementById("sidebar-content").innerHTML =
           "<strong>Data</strong>:"+e.target.feature.properties.data_invio + "<br>" +
           "<strong>Osservatore</strong>:"+e.target.feature.properties.aut + "<br>" +
