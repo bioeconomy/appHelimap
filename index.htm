@@ -174,7 +174,7 @@ map.on('click', function(e) {
 $(document).ready(function() {
   $.ajax({
     type: "GET",
-    url: 'http://149.139.8.55/data/kobodist/kobo_appHeli_csv.php',
+    url: 'data/kobo_appHeli.csv',
     dataType: "text",
     success: function(dataf){ addPoints(dataf);}
   });
